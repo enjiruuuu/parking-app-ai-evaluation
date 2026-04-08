@@ -4,34 +4,33 @@ This repository serves to evaluate the effectiveness of AI workflows against cod
 
 ## Project Structure
 
-The repository contains three Vue.js applications, each set up with the same development stack:
+The repository contains two Flutter applications, each set up with the same development stack:
 
-- **`autonomous-AI/`** - Parking app built autonomously by AI
-- **`governed-AI/`** - Parking app built by AI with human governance
-- **`human-generated/`** - Parking app built by human developers
+- **`autonomous_ai/`** - Parking app built autonomously by AI
+- **`governed_ai/`** - Parking app built by AI with human governance
 
-Each project starts with the same demo code provided during Vue installation.
+Each project starts with the same demo code provided during Flutter installation.
 
-- **`service/`** - Backend service that serves all three frontend applications (will not be modified during this experiment)
+- **`service/`** - Backend service that serves all frontend applications (will not be modified during this experiment)
 
 ## Technology Stack
 
 Each application uses:
 
-- **Vue 3** with TypeScript
-- **Vite** for build tooling and development server
-- **Vitest** for unit testing
-- **Playwright** for end-to-end testing
-- **Node.js** version 20.19.0 or 22.12.0+
+- **Flutter** with Dart
+- **flutter_test** for unit testing
+- **Dart SDK** version 3.11.4+
+- **Material Design** for UI components
 
 ## Requirements
 
-- Node.js ^20.19.0 || >=22.12.0
-- npm (comes with Node.js)
+- Flutter SDK
+- Dart SDK ^3.11.4
+- Compatible IDE (VS Code, Android Studio, or IntelliJ)
 
 ## Installation & Setup
 
-For each application directory (`autonomous-AI/`, `governed-AI/`, `human-generated/`):
+For each application directory (`autonomous_ai/`, `governed_ai/`):
 
 1. Navigate to the application directory:
    ```bash
@@ -40,12 +39,7 @@ For each application directory (`autonomous-AI/`, `governed-AI/`, `human-generat
 
 2. Install dependencies:
    ```bash
-   npm install
-   ```
-
-3. For Playwright e2e tests (first time only):
-   ```bash
-   npx playwright install
+   flutter pub get
    ```
 
 ## Running the Applications
@@ -54,61 +48,41 @@ For each application directory (`autonomous-AI/`, `governed-AI/`, `human-generat
 
 Start the development server with hot-reload:
 ```bash
-npm run dev
+flutter run
 ```
 
 ### Build for Production
 
-Type-check, compile and minify for production:
+Build for different platforms:
 ```bash
-npm run build
+# Android
+flutter build apk
+
+# iOS
+flutter build ios
+
+# Web
+flutter build web
 ```
 
-### Preview Production Build
-
-Preview the production build locally:
-```bash
-npm run preview
-```
-
-## Testing
-
-### Unit Tests (Vitest)
+### Testing
 
 Run unit tests:
 ```bash
-npm run test:unit
+flutter test
 ```
 
-### End-to-End Tests (Playwright)
-
-Run all e2e tests:
+Run widget tests:
 ```bash
-npm run build
-npm run test:e2e
-```
-
-Run e2e tests on specific browser:
-```bash
-npm run test:e2e -- --project=chromium
-```
-
-Run specific test file:
-```bash
-npm run test:e2e -- tests/example.spec.ts
-```
-
-Run tests in debug mode:
-```bash
-npm run test:e2e -- --debug
+flutter test test/widget_test.dart
 ```
 
 ## Development Notes
 
-All three applications share the same:
+All applications share the same:
 - Package structure and dependencies
-- Testing setup (Vitest + Playwright)
-- Build configuration (Vite + TypeScript)
-- Development workflow scripts
+- Testing setup (flutter_test)
+- Flutter configuration
+- Development workflow
 
 This consistency allows for fair comparison of code quality metrics across different development approaches.
