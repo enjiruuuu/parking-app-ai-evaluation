@@ -86,3 +86,23 @@ All applications share the same:
 - Development workflow
 
 This consistency allows for fair comparison of code quality metrics across different development approaches.
+
+## Proposed project structure
+root/
+├── package.json                 # Playwright & project-wide npm dependencies
+├── playwright.config.ts         # Global E2E test configuration
+├── e2e/                         # Playwright tests (using faker-js)
+│   ├── autonomous.spec.ts       # Tests targeting the autonomous app
+│   └── governed.spec.ts         # Tests targeting the governed app
+├── workflows/
+│   └── ai-reviewer.md           # The Agentic Governance instructions
+├── service/                     # Express.js Backend API
+│   ├── package.json
+│   └── src/
+└── apps/                        # Separation of the two experiment subjects
+    ├── autonomous_ai/           # Flutter/Dart app (Generated without guardrails)
+    │   ├── pubspec.yaml
+    │   └── lib/
+    └── governed_ai/             # Flutter/Dart app (Generated with DCM/Governance)
+        ├── pubspec.yaml
+        └── lib/
