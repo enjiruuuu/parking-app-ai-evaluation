@@ -6,6 +6,7 @@
   "scripts": {},
   "author": "angel ng",
   "license": "ISC",
+  "type": "module",
   "devDependencies": {
     "@faker-js/faker": "^10.4.0",
     "@playwright/test": "^1.60.0",
