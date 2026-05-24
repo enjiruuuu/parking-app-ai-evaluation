@@ -70,6 +70,9 @@ test.describe('Community Reporting Application - Anonymized Functional Scope Ver
   });
 
   test('Reports - View List of Existing Reports', async ({ page }) => {
+    await page.getByLabel('Enter your name').fill(existingUserName);
+    await page.getByRole('button', { name: 'Log In' }).click();
+
     const reportDashboard = page.getByRole('list', { name: 'Community Reports' });
     await expect(reportDashboard).toBeVisible();
 
@@ -82,6 +85,9 @@ test.describe('Community Reporting Application - Anonymized Functional Scope Ver
   // ==========================================
 
   test('Interactions - Vote on a Report', async ({ page }) => {
+    await page.getByLabel('Enter your name').fill(existingUserName);
+    await page.getByRole('button', { name: 'Log In' }).click();
+
     const firstReportCard = page.locator('.report-card').first();
     const voteButton = firstReportCard.getByRole('button', { name: 'Vote' });
     const voteCounter = firstReportCard.locator('.vote-count');
@@ -97,6 +103,9 @@ test.describe('Community Reporting Application - Anonymized Functional Scope Ver
   test('Interactions - Add and View Comments on a Report', async ({ page }) => {
     const mockComment = `Comment_${faker.string.alphanumeric({ length: 8 })}_Anonymized`;
     
+    await page.getByLabel('Enter your name').fill(existingUserName);
+    await page.getByRole('button', { name: 'Log In' }).click();
+
     await page.locator('.report-card').first().getByRole('button', { name: 'View Details' }).click();
 
     const commentInput = page.getByLabel('Add a comment');
