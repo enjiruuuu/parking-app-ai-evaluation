@@ -1,4 +1,10 @@
 node_modules/
+.DS_Store
+
+# Service build output
+service/app.js
+service/app.d.ts
+service/app.d.ts.map
 
 # Playwright
 /test-results/
