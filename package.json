@@ -1,0 +1,15 @@
+{
+  "name": "parking-app-ai-evaluation",
+  "version": "1.0.0",
+  "description": "This repository serves to evaluate the effectiveness of AI workflows against code quality metrics. It contains different versions of the same parking app, each built differently to aid in our experiment.",
+  "main": "index.js",
+  "scripts": {},
+  "author": "angel ng",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@faker-js/faker": "^10.4.0",
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.7.0"
+  }
+}

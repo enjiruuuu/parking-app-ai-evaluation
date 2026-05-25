@@ -1,0 +1,14 @@
+node_modules/
+.DS_Store
+
+# Service build output
+service/app.js
+service/app.d.ts
+service/app.d.ts.map
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
