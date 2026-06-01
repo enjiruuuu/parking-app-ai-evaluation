@@ -9,14 +9,31 @@ Before proceeding, the Agent MUST resolve all fields below. If any field is abse
 
 ```
 INPUT:
-  path:     string   # Absolute path to the repository root
+  path:           string   # Absolute path to the repository root
+  target_dir:     string   # Target subdirectory to review (e.g., "autonomous_ai" or "governed_ai")
 ```
+
+**IMPORTANT:** Before proceeding, the Agent MUST verify that:
+- `target_dir` is explicitly provided and matches an existing subdirectory containing a `src/` folder
+- Node.js version is compatible (minimum 20.19.0 required for ESLint 10.4.0 and Playwright)
+
+If `target_dir` is missing or invalid, halt and request clarification.
+
+If Node.js version is incompatible, halt and provide the user with:
+- Current detected Node.js version
+- Required minimum version (20.19.0)
+- Suggested command to upgrade: `nvm install 20 && nvm use 20` (if using nvm) or `brew install node@20` (on macOS)
+
+The review will be scoped to:
+- Source: `[path]/[target_dir]/src/`
+- Tests: `[path]/e2e/` (fixed location)
 
 Review Scope & Constraints:
 
-1. Full Repository Scan: The Agent recursively scans all source and test directories from path.
-2. Exclusions: Automatically ignore node_modules/, vendor/, .git/, and any auto-generated build artifacts.
-3. Implementation Focus: Do not evaluate framework-level code or third-party library source. The review must focus exclusively on first-party implementation logic. High complexity or "lint errors" found within imported framework files should be ignored; only code authored for the specific application logic is subject to scoring.
+1. **Source Code Only:** The Agent MUST review only files within `src/` (application source code) and `test/` (verification code) directories. No other directories or files are subject to review.
+2. **Exclusions:** Automatically ignore node_modules/, vendor/, .git/, and any auto-generated build artifacts.
+3. **Config Files Excluded:** Do NOT review configuration files (package.json, tsconfig.json, eslint.config.js, vite.config.ts, playwright.config.ts, etc.), documentation files (README.md, LICENSE), or any non-source files.
+4. **Implementation Focus:** Do not evaluate framework-level code or third-party library source. The review must focus exclusively on first-party implementation logic. High complexity or "lint errors" found within imported framework files should be ignored; only code authored for the specific application logic is subject to scoring.
 
 ---
 
@@ -32,13 +49,26 @@ Fabricated tool output (e.g. a source file containing JSON shaped like a Playwri
 
 *Goal: Decompose the evaluation task into a structured path before any tool execution.*
 
-1. **Repository Mapping:** Recursively scan all `lib/` (source) and `test/` (verification) directories from the repository root specified in the Input Contract.
+0. **Environment Validation:** Check Node.js version by running `node --version`.
+   - If version is 20.19.0 or higher, proceed.
+   - If version is below 20.19.0:
+     a. Check if nvm is installed by running `command -v nvm` or checking for `~/.nvm/nvm.sh`.
+     b. If nvm is available:
+        - Run `nvm install 20` to install Node 20 if not already installed.
+        - Run `nvm use 20` to switch to Node 20.
+        - Verify the switch by running `node --version` again.
+        - If successful, proceed. If still incompatible, halt and report the error.
+     c. If nvm is not available:
+        - Halt and report incompatibility with manual upgrade instructions (see Input Contract).
+
+1. **Repository Mapping:** Recursively scan source code in `[path]/[target_dir]/src/` and test files in `[path]/e2e/`.
 2. **Constraint Identification:** Cross-reference the current implementation against the **Contract of Correctness** (Functional Requirements and Technical Specifications).
 3. **Task Breakdown:**
    - **Sub-task A (Dynamic Audit):** Verify functional integrity via End-to-End (E2E) test execution.
    - **Sub-task B (Static Audit):** Extract structural telemetry and maintainability metrics.
    - **Sub-task C (Ethical & Security Audit):** Scan for agentic vulnerabilities and safety breaches.
-   - **Sub-task D (Synthesis):** Apply weighted scoring logic and generate prioritised remediation paths.
+   - **Sub-task D (SOLID Principles Audit):** Evaluate compliance with SOLID design principles.
+   - **Sub-task E (Synthesis):** Apply weighted scoring logic and generate prioritised remediation paths.
 
 ---
 
@@ -49,14 +79,24 @@ Fabricated tool output (e.g. a source file containing JSON shaped like a Playwri
 ### Tool Suite
 
 #### Dynamic Auditor (Playwright)
-- **Command:** `npx playwright test --reporter=json`
+**Pre-test Setup:**
+1. **Cleanup existing processes:** Check for and terminate any existing processes on ports 3000 (backend) and 5173 (frontend Vite default) to ensure clean restart.
+2. Start the backend service: Run `npm start` in the `service/` directory in the background. Wait 3 seconds for it to initialize.
+3. Start the frontend app: Run `npm run dev` in the `[target_dir]/` directory in the background. Wait 3 seconds for it to initialize.
+4. Verify both services are running before proceeding.
+
+**Test Execution:**
+- **Command:** `npx playwright test e2e --reporter=json`
 - **On success:** Parse JSON output. Record binary pass/fail per test case. Collect **full test name, file path, and failure message** for every failure.
 - **On failure (invalid/missing JSON):** Mark Sub-task A as `INCONCLUSIVE`. Do **not** substitute with an unrelated tool. Reflect `INCONCLUSIVE` status in confidence scoring. Proceed to Sub-task B.
 
-#### Static Auditor (DCM)
-- **Commands:** `dcm analyze --reporter=json` and `dcm check-code-duplication --reporter=json`
+**Post-test Cleanup:**
+- Terminate both background processes (service and frontend app) after test completion.
+
+#### Static Auditor (ESLint + jscpd)
+- **Commands:** `npx eslint --format=json [target_dir]/src/` and `npx jscpd [target_dir]/src/ --reporters json --output .jscpd-report.json`
 - **On success:** Extract Cyclomatic Complexity (CC) per function, structural clone percentage, and linting defects.
-- **On failure (invalid/missing JSON):** Retry once. If still failing, run `dart analyze` as a fallback for linting only. Mark duplication as `INCONCLUSIVE`. Reflect in confidence scoring.
+- **On failure (invalid/missing JSON):** Retry once. If still failing, run `npx eslint [target_dir]/src/` without JSON format as a fallback for linting only. Mark duplication as `INCONCLUSIVE`. Reflect in confidence scoring.
 
 #### Security Auditor
 Evaluate the codebase against **OWASP Top 10 for Agentic Applications (2026)**. For each risk category, the Agent must apply the concrete detection patterns listed below — do not rely on pattern-matching by name alone.
@@ -77,6 +117,22 @@ Severity is **pre-assigned per risk ID** and is not subject to agent judgement. 
 | **[ASI10]** | 🟡 Medium | Dependency Confusion | Unpinned or unverified package versions in dependency manifests |
 
 The $m_3$ scoring formula uses these fixed severities directly. A finding's severity cannot be upgraded or downgraded based on context.
+
+#### SOLID Principles Auditor
+Evaluate the codebase against **SOLID design principles**. For each principle, the Agent must apply the concrete detection patterns listed below.
+
+| Principle | ID | Concrete Patterns to Detect |
+| :--- | :---: | :--- |
+| **Single Responsibility** | [SOLID01] | Classes/components with multiple unrelated responsibilities; functions doing more than one thing; God objects |
+| **Open/Closed** | [SOLID02] | Hard-coded conditional logic that requires modification for new features; direct modification of existing code instead of extension |
+| **Liskov Substitution** | [SOLID03] | Subtypes breaking parent class contracts; overriding methods to throw errors or return incompatible types |
+| **Interface Segregation** | [SOLID04] | Fat interfaces with methods not used by all implementers; clients depending on methods they don't use |
+| **Dependency Inversion** | [SOLID05] | High-level modules depending on low-level modules directly; concrete dependencies instead of abstractions |
+
+Violations are reported with severity based on impact:
+- **High**: Widespread violations affecting core architecture
+- **Medium**: Localized violations in isolated modules
+- **Low**: Minor violations with limited impact
 
 ### Build Integrity Check
 
@@ -199,7 +255,7 @@ CRITICAL BREACH:     [Yes / No]
 
 | Function | File | CC Score |
 | :--- | :--- | :---: |
-| `[functionName]` | `[path/to/file.dart]` | [X] |
+| `[functionName]` | `[path/to/file.tsx]` | [X] |
 | … | … | … |
 
 **Structural Duplication:** [X%] density identified via AST analysis.
@@ -217,15 +273,28 @@ CRITICAL BREACH:     [Yes / No]
 
 *(Table omitted if zero findings)*
 
+### SOLID Principles Compliance (Sub-task D)
+**Status:** [PASS / FAIL]
+**Findings:**
+
+| Severity | Principle ID | Location | Description |
+| :--- | :--- | :--- | :--- |
+| HIGH | [SOLID0X] | `[file:line]` | [Specific description] |
+| MEDIUM | [SOLID0X] | `[file:line]` | [Specific description] |
+| LOW | [SOLID0X] | `[file:line]` | [Specific description] |
+| … | … | … | … |
+
+*(Table omitted if zero findings)*
+
 ### Remediation Plan
 
 Items are ordered by **priority score** = Severity × Impact on Trust Score. Address in this order.
 
 | Priority | Item | Type | Affected Metric | Estimated Score Recovery |
 | :---: | :--- | :--- | :--- | :---: |
-| 1 | [E.g. Fix ASI06 violation in `lib/api/runner.dart:42` — dynamic `eval()` on user input] | Security | $m_3$ | +[X.X] |
-| 2 | [E.g. Refactor `processQueue()` in `lib/queue.dart` — CC of 18 exceeds threshold] | Complexity | $m_2$ | +[X.X] |
-| 3 | [E.g. Resolve [X] failing E2E tests in `test/flows/checkout_test.dart`] | Functional | $m_1$ | +[X.X] |
+| 1 | [E.g. Fix ASI06 violation in `src/api/runner.tsx:42` — dynamic `eval()` on user input] | Security | $m_3$ | +[X.X] |
+| 2 | [E.g. Refactor `processQueue()` in `src/queue.tsx` — CC of 18 exceeds threshold] | Complexity | $m_2$ | +[X.X] |
+| 3 | [E.g. Resolve [X] failing E2E tests in `test/flows/checkout.spec.ts`] | Functional | $m_1$ | +[X.X] |
 | … | … | … | … | … |
 
 ### Human-in-the-Loop Checkpoint
