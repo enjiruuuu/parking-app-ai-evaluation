@@ -3,30 +3,24 @@ rules:
 ###############################################
 # XSS: Solid innerHTML binding
 ###############################################
-
 - id: solid-innerhtml-reactive-xss
   languages:
     - typescript
-    - tsx
+    - javascript
   message: >
     Potential XSS: untrusted value assigned to SolidJS innerHTML.
     Verify sanitization before rendering.
   severity: ERROR
-  patterns:
-    - pattern: |
-        <$TAG innerHTML={$VALUE} />
+  pattern: <$TAG innerHTML={$VALUE} ... />
   metadata:
     category: security
     technology:
       - solidjs
     confidence: medium
 
-
-
 ###############################################
 # XSS: Direct DOM manipulation
 ###############################################
-
 - id: solid-direct-innerhtml-assignment
   languages:
     - typescript
@@ -34,22 +28,17 @@ rules:
   message: >
     Potential DOM XSS through direct innerHTML assignment.
   severity: ERROR
-  patterns:
-    - pattern-either:
-        - pattern: $ELEMENT.innerHTML = $VALUE
-        - pattern: $ELEMENT.outerHTML = $VALUE
-        - pattern: $ELEMENT.insertAdjacentHTML(...)
-
+  pattern-either:
+    - pattern: $ELEMENT.innerHTML = $VALUE
+    - pattern: $ELEMENT.outerHTML = $VALUE
+    - pattern: $ELEMENT.insertAdjacentHTML(...)
   metadata:
     category: security
     confidence: medium
 
-
-
 ###############################################
 # Unsafe HTML insertion
 ###############################################
-
 - id: solid-document-write
   languages:
     - typescript
@@ -58,21 +47,17 @@ rules:
     document.write may introduce DOM injection vulnerabilities.
   severity: ERROR
   pattern: document.write(...)
-
   metadata:
     category: security
     confidence: medium
 
-
-
 ###############################################
 # Missing lifecycle cleanup candidates
 ###############################################
-
 - id: solid-effect-event-listener
   languages:
     - typescript
-    - tsx
+    - javascript
   message: >
     createEffect creates external browser side effects.
     Verify onCleanup removes listeners/resources.
@@ -88,42 +73,31 @@ rules:
         - pattern: setInterval(...)
         - pattern: setTimeout(...)
         - pattern: new WebSocket(...)
-
   metadata:
     category: resource-leak
     confidence: medium
 
-
-
 ###############################################
 # Unsafe URL bindings
 ###############################################
-
 - id: solid-dangerous-url-binding
   languages:
-    - tsx
+    - typescript
+    - javascript
   message: >
     URL binding should be validated against javascript/data schemes.
   severity: WARNING
-  patterns:
-    - pattern-either:
-        - pattern: |
-            <a href={$URL}>
-        - pattern: |
-            <iframe src={$URL}>
-        - pattern: |
-            <img src={$URL}>
-
+  pattern-either:
+    - pattern: <a href={$URL} ...>...</a>
+    - pattern: <iframe src={$URL} ...>...</iframe>
+    - pattern: <img src={$URL} ... />
   metadata:
     category: xss
     confidence: low
 
-
-
 ###############################################
 # Hardcoded secrets
 ###############################################
-
 - id: solid-hardcoded-secret
   languages:
     - typescript
@@ -131,36 +105,29 @@ rules:
   message: >
     Possible credential exposed in client source.
   severity: ERROR
-  patterns-regex:
-    - "(sk_live_[A-Za-z0-9]+)"
-    - "(AKIA[0-9A-Z]{16})"
-    - "PRIVATE_KEY"
-    - "BEGIN RSA PRIVATE KEY"
-
+  pattern-either:
+    - pattern-regex: "(sk_live_[A-Za-z0-9]+)"
+    - pattern-regex: "(AKIA[0-9A-Z]{16})"
+    - pattern-regex: "PRIVATE_KEY"
+    - pattern-regex: "BEGIN RSA PRIVATE KEY"
   metadata:
     category: secret-exposure
     confidence: high
 
-
-
 ###############################################
 # Unsafe JSON parsing into state
 ###############################################
-
 - id: solid-json-to-store
   languages:
     - typescript
+    - javascript
   message: >
     JSON.parse result flows directly into reactive state.
     Validate structure before storing.
   severity: WARNING
-  patterns:
-    - pattern-either:
-        - pattern: |
-            createStore(JSON.parse(...))
-        - pattern: |
-            setStore(JSON.parse(...))
-
+  pattern-either:
+    - pattern: createStore(JSON.parse(...))
+    - pattern: setStore(JSON.parse(...))
   metadata:
     category: unsafe-deserialization
     confidence: medium

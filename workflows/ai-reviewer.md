@@ -15,6 +15,8 @@ INPUT:
 
 ```
 
+**IMPORTANT:** Run review against ONLY the target_dir, do not run both autonomous_ai and governed_ai.
+
 **IMPORTANT:** Before proceeding, the Agent MUST verify that:
 
 * `target_dir` is explicitly provided and matches an existing subdirectory containing a `src/` folder.
@@ -77,21 +79,11 @@ Source (.ts/.tsx)
         |
         +--> TypeScript AST Analysis
         |       |
-        |       +--> Complexity
+        |       +--> Complexity (Manual Analysis)
         |       +--> SolidJS Reactivity Checks
         |       +--> Lifecycle Checks
         |       +--> Type Narrowing Validation
-        |
-        |
-        +--> Transpiled Compatibility Layer
-                |
-                +--> Legacy JavaScript-only tools
-                |       |
-                |       +--> escomplex
-                |       +--> esgraph
 
-
-The Agent MUST generate `.review-transpiled/` only for tools that cannot parse TypeScript.
 
 The Agent MUST NOT use transpiled output as the source of truth for:
 - security findings
@@ -101,9 +93,8 @@ The Agent MUST NOT use transpiled output as the source of truth for:
 
 All findings MUST map back to original `.ts`/`.tsx` files.
 
-1. **Repository Mapping:** Recursively scan the `.review-transpiled/` folder for metrics tools, and map back line references to original `.ts`/`.tsx` files in `[path]/[target_dir]/src/`.
-2. **Task Breakdown:**
-* **Metric A: Cyclomatic Complexity** - Deploy Complexity Agent using `ts-complex` or running `escomplex` over the `.review-transpiled/` directory.
+1. **Task Breakdown:**
+* **Metric A: Cyclomatic Complexity** - Deploy Complexity Agent using manual analysis of source code (complexity-report and esgraph are incompatible with modern JavaScript/TypeScript).
 * **Metric B: Defect Density** - Deploy Defect Agent to evaluate runtime bugs via Playwright E2E tests.
 * **Metric C: Code Duplication** - Deploy Duplication Agent to analyze repeated code blocks using `jscpd`, configured to ignore generic structural reactive imports.
 * **Metric D: Security Risks** - Deploy Security Agent to scan using Semgrep, loaded with custom rules tailored for SolidJS (ignoring invalid generic React rules).
@@ -120,26 +111,18 @@ All findings MUST map back to original `.ts`/`.tsx` files.
 ### Metric A: Cyclomatic Complexity Analysis
 
 **Agent Role:** Complexity Agent
-**Tooling:** escomplex (executed on `.review-transpiled/`), esgraph, graphviz
+**Tooling:** Manual analysis (complexity-report and esgraph are incompatible with modern JavaScript/TypeScript)
 **Weight:** 20%
 
 **Execution Steps:**
 
-1. **Run complexity analysis on transpiled source:**
-```bash
-npx escomplex .review-transpiled/ --format json --output .complexity-report.json
+1. **Perform manual complexity analysis:**
+   - Examine each function in the source code
+   - Count decision points (if statements, ternary operators, logical operators, loops, catch blocks)
+   - Calculate cyclomatic complexity: CC = 1 + (number of decision points)
+   - Document independent paths for each function (the specific branches that contribute to CC)
 
-```
-
-
-2. **Generate Control Flow Graphs:**
-```bash
-npx esgraph .review-transpiled/ > .cfg-data.json
-
-```
-
-
-3. **Scoring Criteria:**
+2. **Scoring Criteria:**
 * Start with base score of 10.
 * Deduct 0.5 points for each function with CC > 10.
 * Deduct 1 point for each function with CC > 15.
@@ -149,8 +132,10 @@ npx esgraph .review-transpiled/ > .cfg-data.json
 $$Score_A = \max(0, 10 - (0.5 \times C_{10}) - (1 \times C_{15}) - (2 \times C_{20}))$$
 
 
-4. **Output Requirements:**
-* List functions with CC > 10, mapping temporary file names back to original `.tsx`/`.ts` paths.
+3. **Output Requirements:**
+* List ALL functions with their cyclomatic complexity scores, grouped by file.
+* For each function, include the independent paths that contributed to the CC calculation (decision points and branches).
+* Map findings back to original `.tsx`/`.ts` paths.
 
 
 
@@ -167,7 +152,7 @@ $$Score_A = \max(0, 10 - (0.5 \times C_{10}) - (1 \times C_{15}) - (2 \times C_{
 1. **Pre-test Setup:** Clear ports 3000 and 5173. Execute background instances for service and frontend.
 2. **Run Playwright tests:**
 ```bash
-npx playwright test e2e --reporter=json
+./node_modules/.bin/playwright test e2e --reporter=json
 
 ```
 
@@ -194,7 +179,7 @@ $$Score_B = \max(0, 10 - (2 \times F_{e2e}))$$
 
 1. **Run jscpd analysis:** Execute with configuration flags to ignore structural declarations (`.d.ts`) and minimize false signals caused by identical repetitive signal patterns (like boilerplate `createSignal` / `createStore` bindings).
 ```bash
-npx jscpd [target_dir]/src/ --reporters json --output .jscpd-report.json --ignore "**/*.d.ts"
+./node_modules/.bin/jscpd [target_dir]/src/ --reporters json --output .jscpd-report.json --ignore "**/*.d.ts"
 
 ```
 
@@ -221,6 +206,11 @@ Security analysis consists of two stages.
 
 Run:
 
+```bash
+semgrep --config .review/semgrep-solid.yaml --json --output .semgrep-report.json [target_dir]/src/
+```
+
+If semgrep is not available globally, use npx:
 ```bash
 npx semgrep --config .review/semgrep-solid.yaml --json --output .semgrep-report.json [target_dir]/src/
 ```
@@ -543,6 +533,10 @@ LOW:
 | Function | File | CC Score | Status |
 | --- | --- | --- | --- |
 | `[functionName]` | `[path/to/file.tsx]` | [X] | [WARNING/FAIL] |
+
+**Control Flow Graph Visualizations:**
+For functions with CC > 15, CFG visualizations are available at:
+- `.review/cfg-visualizations/{function_name}.png`
 
 ---
 

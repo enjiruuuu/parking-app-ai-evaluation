@@ -1,6 +1,5 @@
 node_modules/
 .DS_Store
-.review-transpiled
 
 # Service build output
 service/app.js
