@@ -167,17 +167,18 @@ const App: Component = () => {
             onInput={(e) => setUsername(e.currentTarget.value)}
             placeholder="Enter your name"
             aria-label="Enter your name"
+            data-testid="username-input"
           />
-          <button onClick={registerOrLogin}>Log In</button>
+          <button onClick={registerOrLogin} data-testid="login-button">Log In</button>
         </div>
       ) : (
         <div class="dashboard">
           {showAlert() && (
-            <div role="alert">{alertMessage()}</div>
+            <div role="alert" data-testid="alert-message">{alertMessage()}</div>
           )}
           <p>Logged in as: {currentUser()}</p>
 
-          <button onClick={() => setShowCreateForm(!showCreateForm())}>
+          <button onClick={() => setShowCreateForm(!showCreateForm())} data-testid="create-report-button">
             {showCreateForm() ? 'Cancel' : 'Create New Report'}
           </button>
 
@@ -190,26 +191,28 @@ const App: Component = () => {
                 value={reportTitle()}
                 onInput={(e) => setReportTitle(e.currentTarget.value)}
                 placeholder="Enter report title"
+                data-testid="report-title-input"
               />
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
+                data-testid="file-input"
               />
-              <button onClick={createReport}>Submit Report</button>
+              <button onClick={createReport} data-testid="submit-report-button">Submit Report</button>
             </div>
           )}
 
-          <div role="list" aria-label="Community Reports" class="reports-list">
+          <div role="list" aria-label="Community Reports" class="reports-list" data-testid="reports-list">
             {photos().map((photo) => (
-              <div class="report-card">
+              <div class="report-card" data-testid="report-card">
                 <h3>{photo.location}</h3>
                 {photo.uri && <img src={photo.uri} alt={photo.location} style="max-width: 200px;" />}
                 <div class="vote-section">
                   <span class="vote-count">{photo.votes}</span>
-                  <button onClick={() => voteOnPhoto(photo.id)}>Vote</button>
+                  <button onClick={() => voteOnPhoto(photo.id)} data-testid="vote-button">Vote</button>
                 </div>
-                <button onClick={() => setSelectedPhoto(photo)}>View Details</button>
+                <button onClick={() => setSelectedPhoto(photo)} data-testid="view-details-button">View Details</button>
               </div>
             ))}
           </div>
@@ -219,7 +222,7 @@ const App: Component = () => {
               <h2>{selectedPhoto()!.location}</h2>
               {selectedPhoto()!.uri && <img src={selectedPhoto()!.uri} alt={selectedPhoto()!.location} style="max-width: 400px;" />}
               <h3>Comments</h3>
-              <div role="list" aria-label="User Comments" class="comments-list">
+              <div role="list" aria-label="User Comments" class="comments-list" data-testid="comments-list">
                 {selectedPhoto()!.comments.map((comment) => (
                   <div class="comment">{comment}</div>
                 ))}
@@ -231,10 +234,11 @@ const App: Component = () => {
                   type="text"
                   value={newComment()}
                   onInput={(e) => setNewComment(e.currentTarget.value)}
+                  data-testid="comment-input"
                 />
-                <button onClick={() => addComment(selectedPhoto()!.id)}>Post Comment</button>
+                <button onClick={() => addComment(selectedPhoto()!.id)} data-testid="post-comment-button">Post Comment</button>
               </div>
-              <button onClick={() => setSelectedPhoto(null)}>Close</button>
+              <button onClick={() => setSelectedPhoto(null)} data-testid="close-button">Close</button>
             </div>
           )}
         </div>
